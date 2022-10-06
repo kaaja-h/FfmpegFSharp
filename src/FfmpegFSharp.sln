@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30114.105
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FfmpegFSharp", "FfmpegFSharp\FfmpegFSharp.fsproj", "{888163EE-6F8E-4F6D-966E-9A7AD95190A7}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FfmpegFSharp.Tests", "FfmpegFSharp.Tests\FfmpegFSharp.Tests.fsproj", "{443185DB-3587-41F0-9755-2545A7BC15D9}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{888163EE-6F8E-4F6D-966E-9A7AD95190A7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{888163EE-6F8E-4F6D-966E-9A7AD95190A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{888163EE-6F8E-4F6D-966E-9A7AD95190A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{888163EE-6F8E-4F6D-966E-9A7AD95190A7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{443185DB-3587-41F0-9755-2545A7BC15D9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{443185DB-3587-41F0-9755-2545A7BC15D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{443185DB-3587-41F0-9755-2545A7BC15D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{443185DB-3587-41F0-9755-2545A7BC15D9}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

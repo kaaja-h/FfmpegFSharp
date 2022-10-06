@@ -56,14 +56,16 @@ let private checkFilename filename =
 
 let private commandLineFlags =
     lazy
-        (Map[MediaFileInfoItems.Format, "-show_format"
+        (Map[
+        MediaFileInfoItems.Format, "-show_format"
         MediaFileInfoItems.Streams, "-show_streams"
         MediaFileInfoItems.Programs, "-show_programs"
         MediaFileInfoItems.Chapters, "-show_chapters"
         MediaFileInfoItems.ProgramVersion, "-show_program_version"
         MediaFileInfoItems.LibraryVersions, "-show_library_versions"
         MediaFileInfoItems.Frames, "-show_frames"
-        MediaFileInfoItems.Packets, "-show_packets"])
+        MediaFileInfoItems.Packets, "-show_packets"
+        ])
 
 let private commandLineArguments flags =
     commandLineFlags.Force()

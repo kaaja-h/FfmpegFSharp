@@ -6,7 +6,11 @@ open Xunit
 
 open FsUnit
 
-
+let u someTimespanToSeek someTimespandDutarion =
+    EncodingParameters.prepareSessionParameters "source_file" "target_file"
+                        |> Result.bind (EncodingParameters.setSeekTime someTimespanToSeek)
+                        |> Result.bind (EncodingParameters.setDuration someTimespandDutarion)
+                        |> Result.bind (EncodingParameters.setVideoCodec "someCodecName")
 
 [<Fact>]
 let encodingParamsTest () =
@@ -14,7 +18,6 @@ let encodingParamsTest () =
         EncodingParameters.prepareSessionParameters
             @"z:\recordings\Bob a Bobek - kralici z klobouku, Vecernicek-CT _D-art HD2022-09-29 18-45.mkv"
             "sss.mkv"
-            Defaults.defaultConfiguration
 
     let res =
         u

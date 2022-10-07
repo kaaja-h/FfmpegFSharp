@@ -86,7 +86,7 @@ let getFormats =
 
 
 
-let prepareSessionParameters (inputFile: string) (outputFile: string) (options: FfmpegOptions) =
+let prepareSessionParametersWithOptions (options: FfmpegOptions) (inputFile: string) (outputFile: string)  =
     validateInputFile inputFile
     |> Result.bind (MediaFileInfo.readData MediaFileInfoItems.VersionsAndBasicMedia)
     |> Result.bind (fun mediaFileInfo ->
@@ -106,6 +106,9 @@ let prepareSessionParameters (inputFile: string) (outputFile: string) (options: 
           supportedCodecs = supportedCodecs
           customCommandlineOptions = None
           overwriteTarget = false })
+    
+let prepareSessionParameters = prepareSessionParametersWithOptions Defaults.defaultConfiguration
+    
 
 let setSeekTime (seek: TimeSpan) (parameters: FfmpegEncodingSessionParameters) =
     Ok { parameters with seekTime = Some seek }

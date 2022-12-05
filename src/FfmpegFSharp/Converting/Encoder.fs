@@ -72,14 +72,14 @@ let private prepareCommandlineParameters (parameters: FfmpegEncodingSessionParam
         if (parameters.audioCodec |> Option.isSome) then
             yield $"-codec:a %s{parameters.audioCodec.Value}"
 
-        if (parameters.audioBitrate |> Option.isNone) then
+        if (parameters.audioBitrate |> Option.isSome) then
             yield! bitrateCommandlineOptions "a" (parameters.audioBitrate |> Option.get)
 
 
         if (parameters.videoCodec |> Option.isSome) then
             yield $"-codec:v %s{parameters.videoCodec.Value}"
 
-        if (parameters.videoBitrate |> Option.isNone) then
+        if (parameters.videoBitrate |> Option.isSome) then
             yield! bitrateCommandlineOptions "v" (parameters.videoBitrate |> Option.get)
 
         yield "-hide_banner"

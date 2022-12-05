@@ -4,7 +4,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <PackageVersion>0.0.1</PackageVersion>
+    <PackageVersion>0.0.3</PackageVersion>
     <Title>FfmpegFSharp</Title>
     <Authors>karel.honzl@gmail.com</Authors>
     <Description>F# library for running ffmpeg and ffprobe</Description>
@@ -12,7 +12,7 @@
     <PackageLicenseUrl>https://raw.githubusercontent.com/kaaja-h/FfmpegFSharp/main/LICENSE</PackageLicenseUrl>
     <RepositoryUrl>https://github.com/kaaja-h/FfmpegFSharp</RepositoryUrl>
     <PackageTags>ffmpeg f#</PackageTags>
-    <AssemblyVersion>0.0.1</AssemblyVersion>
+    <AssemblyVersion>0.0.3</AssemblyVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
@@ -28,6 +28,10 @@
     <Compile Include="Converting\Api.fs" />
     <Compile Include="Converting\EncodingParameters.fs" />
     <Compile Include="Converting\Encoder.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FSharp.SystemTextJson" Version="1.0.6" />
   </ItemGroup>
 
 </Project>

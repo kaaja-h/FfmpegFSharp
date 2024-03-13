@@ -22,13 +22,11 @@ let private prepareJsonOptions () =
     let res = new JsonSerializerOptions()
     let factories = jsonFactories ()
 
-    factories
-    |> List.fold (fun _ c -> res.Converters.Add(c)) ()
+    factories |> List.fold (fun _ c -> res.Converters.Add(c)) ()
 
     res
 
-let private jsonOptions =
-    lazy (prepareJsonOptions ())
+let private jsonOptions = lazy (prepareJsonOptions ())
 
 
 let prepareInfo (stringJsonResult: string) =
@@ -40,32 +38,33 @@ let prepareInfo (stringJsonResult: string) =
 let prepareInfoResult (stringJsonResult: string) =
     try
         Ok(prepareInfo stringJsonResult)
-    with
-    | e -> Error $"Error parsing text\n%s{stringJsonResult}\n%s{e.ToString()}"
+    with e ->
+        Error $"Error parsing text\n%s{stringJsonResult}\n%s{e.ToString()}"
 
 
 
-let private checkFilename filename =
-    let fi = FileInfo filename
-
-    if not (fi.Exists) then
-        Error $"file %s{filename} does not exists"
+let private checkFilename (filename: string) =
+    if (filename.StartsWith("http://") || filename.StartsWith("https://")) then
+        Ok(filename)
     else
-        Ok(fi.FullName)
+        let fi = FileInfo filename
+
+        if not fi.Exists then
+            Error $"file %s{filename} does not exists"
+        else
+            Ok(fi.FullName)
 
 
 let private commandLineFlags =
     lazy
-        (Map[
-                MediaFileInfoItems.Format, "-show_format"
-                MediaFileInfoItems.Streams, "-show_streams"
-                MediaFileInfoItems.Programs, "-show_programs"
-                MediaFileInfoItems.Chapters, "-show_chapters"
-                MediaFileInfoItems.ProgramVersion, "-show_program_version"
-                MediaFileInfoItems.LibraryVersions, "-show_library_versions"
-                MediaFileInfoItems.Frames, "-show_frames"
-                MediaFileInfoItems.Packets, "-show_packets"
-        ])
+        Map[MediaFileInfoItems.Format, "-show_format"
+            MediaFileInfoItems.Streams, "-show_streams"
+            MediaFileInfoItems.Programs, "-show_programs"
+            MediaFileInfoItems.Chapters, "-show_chapters"
+            MediaFileInfoItems.ProgramVersion, "-show_program_version"
+            MediaFileInfoItems.LibraryVersions, "-show_library_versions"
+            MediaFileInfoItems.Frames, "-show_frames"
+            MediaFileInfoItems.Packets, "-show_packets"]
 
 let private commandLineArguments flags =
     commandLineFlags.Force()
@@ -76,8 +75,7 @@ let private commandLineArguments flags =
 
 let internal runFFprobe ffprobePath args =
     async {
-        let startInfo =
-            new ProcessStartInfo(fileName = ffprobePath, arguments = args)
+        let startInfo = new ProcessStartInfo(fileName = ffprobePath, arguments = args)
 
         startInfo.RedirectStandardOutput <- true
         startInfo.RedirectStandardError <- true
@@ -92,19 +90,13 @@ let internal runFFprobe ffprobePath args =
             return (Error "Process not started")
         else
 
-            let resultAsync =
-                ffprobeProcess.StandardOutput.ReadToEndAsync()
-                |> Async.AwaitTask
+            let resultAsync = ffprobeProcess.StandardOutput.ReadToEndAsync() |> Async.AwaitTask
 
-            let errorAsync =
-                ffprobeProcess.StandardError.ReadToEndAsync()
-                |> Async.AwaitTask
+            let errorAsync = ffprobeProcess.StandardError.ReadToEndAsync() |> Async.AwaitTask
 
             let! outputs = [ resultAsync; errorAsync ] |> Async.Parallel
 
-            let! res =
-                ffprobeProcess.WaitForExitAsync()
-                |> Async.AwaitTask
+            let! _ = ffprobeProcess.WaitForExitAsync() |> Async.AwaitTask
 
             return
                 match outputs with
@@ -116,13 +108,9 @@ let internal runFFprobe ffprobePath args =
 
 let private runFFProbeProcess ffprobePath flags filename =
     let args =
-        [ "-of"
-          "json=c=1"
-          "-v"
-          "error"
-          "-private" ]
+        [ "-of"; "json=c=1"; "-v"; "error"; "-private" ]
         @ (commandLineArguments flags)
-          @ [ $"\"%s{filename}\"" ]
+        @ [ $"\"%s{filename}\"" ]
         |> String.concat " "
 
     runFFprobe ffprobePath args
@@ -154,27 +142,21 @@ let readJsonWithOptionsAsync options (flags: MediaFileInfoItems) filename =
     }
 
 let readDataWithOptionsAsync options flags filename =
-    readJsonWithOptionsAsync options flags filename
-    |> pipeProcessAsync
+    readJsonWithOptionsAsync options flags filename |> pipeProcessAsync
 
 let readJsonWithOptions options flags filename =
-    readJsonWithOptionsAsync options flags filename
-    |> Async.RunSynchronously
+    readJsonWithOptionsAsync options flags filename |> Async.RunSynchronously
 
 let readDataWithOptions options flags filename =
-    readDataWithOptionsAsync options flags filename
-    |> Async.RunSynchronously
+    readDataWithOptionsAsync options flags filename |> Async.RunSynchronously
 
-let readJsonAsync =
-    readJsonWithOptionsAsync Defaults.defaultConfiguration
+let readJsonAsync = readJsonWithOptionsAsync Defaults.defaultConfiguration
 
 let readDataAsync flags filename =
     readJsonAsync flags filename |> pipeProcessAsync
 
 let readJson flags filename =
-    readJsonAsync flags filename
-    |> Async.RunSynchronously
+    readJsonAsync flags filename |> Async.RunSynchronously
 
 let readData flags filename =
-    readDataAsync flags filename
-    |> Async.RunSynchronously
+    readDataAsync flags filename |> Async.RunSynchronously

@@ -76,8 +76,7 @@ type FfmpegEncodingSessionParameters =
       supportedCodecs: CodecType list
       customCommandlineOptions: string option
       overwriteTarget: bool
-
-     }
+      metadata: Map<string, string> }
 
 type ProgressType =
     { frame: int option

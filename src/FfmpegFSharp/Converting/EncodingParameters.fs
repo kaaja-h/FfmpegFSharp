@@ -7,8 +7,10 @@ open FfmpegFSharp.Converting
 
 
 
-let private validateInputFile file =
-    if not (System.IO.File.Exists file) then
+let private validateInputFile (file: string) =
+    if (file.StartsWith("http://") || file.StartsWith("https://")) then
+        Ok file
+    elif not (System.IO.File.Exists file) then
         Error "file not exists"
     else
         Ok file
@@ -32,8 +34,7 @@ let private prepareCodec (flags: string) code name =
 
 
 let private parseCodecs (data: string) =
-    let r =
-        Regex(@"^ (.{6}) ([^=][^\ ]*)\ *(.+)")
+    let r = Regex(@"^ (.{6}) ([^=][^\ ]*)\ *(.+)")
 
     let res =
         data.Split(Environment.NewLine)
@@ -45,15 +46,14 @@ let private parseCodecs (data: string) =
     res
 
 let private parseFormats (data: string) =
-    let r =
-        Regex(@"^ (.{2}) ([^=][^\ ]*)\ *(.+)")
+    let r = Regex(@"^ (.{2}) ([^=][^\ ]*)\ *(.+)")
 
     data.Split(Environment.NewLine)
     |> Array.map r.Match
     |> Array.filter (fun d -> d.Success)
     |> Array.map (fun d ->
-        { code = d.Groups[ 2 ].Value.Trim()
-          name = d.Groups[ 3 ].Value.Trim()
+        { code = d.Groups[2].Value.Trim()
+          name = d.Groups[3].Value.Trim()
           encode = d.Groups[1].Value[1..1] = "E"
           decode = d.Groups[1].Value[0..0] = "D" })
     |> Seq.toList
@@ -86,7 +86,7 @@ let getFormats =
 
 
 
-let prepareSessionParametersWithOptions (options: FfmpegOptions) (inputFile: string) (outputFile: string)  =
+let prepareSessionParametersWithOptions (options: FfmpegOptions) (inputFile: string) (outputFile: string) =
     validateInputFile inputFile
     |> Result.bind (MediaFileInfo.readData MediaFileInfoItems.VersionsAndBasicMedia)
     |> Result.bind (fun mediaFileInfo ->
@@ -105,42 +105,55 @@ let prepareSessionParametersWithOptions (options: FfmpegOptions) (inputFile: str
           duration = None
           supportedCodecs = supportedCodecs
           customCommandlineOptions = None
-          overwriteTarget = false })
-    
-let prepareSessionParameters = prepareSessionParametersWithOptions Defaults.defaultConfiguration
-    
+          overwriteTarget = false
+          metadata = Map.empty })
+
+let prepareSessionParameters =
+    prepareSessionParametersWithOptions Defaults.defaultConfiguration
+
 
 let setSeekTime (seek: TimeSpan) (parameters: FfmpegEncodingSessionParameters) =
     Ok { parameters with seekTime = Some seek }
 
 let setDuration (duration: TimeSpan) (parameters: FfmpegEncodingSessionParameters) =
-    Ok { parameters with duration = Some duration }
+    Ok
+        { parameters with
+            duration = Some duration }
 
 let setAudioCodec codec (parameters: FfmpegEncodingSessionParameters) =
-    if codec = "copy"
-       || parameters.supportedCodecs
-          |> List.exists (fun c ->
-              c.code = codec
-              && c.codecType = CodecTypeEnum.AudioCodec) then
-        Ok { parameters with audioCodec = Some codec }
+    if
+        codec = "copy"
+        || parameters.supportedCodecs
+           |> List.exists (fun c -> c.code = codec && c.codecType = CodecTypeEnum.AudioCodec)
+    then
+        Ok
+            { parameters with
+                audioCodec = Some codec }
     else
         Error "codec not supported"
 
+let setMetadata metadata (parameters: FfmpegEncodingSessionParameters) =
+    Ok { parameters with metadata = metadata }
+
 let setVideoCodec codec (parameters: FfmpegEncodingSessionParameters) =
-    if codec = "copy"
-       || parameters.supportedCodecs
-          |> List.exists (fun c ->
-              c.code = codec
-              && c.codecType = CodecTypeEnum.VideoCodec) then
-        Ok { parameters with videoCodec = Some codec }
+    if
+        codec = "copy"
+        || parameters.supportedCodecs
+           |> List.exists (fun c -> c.code = codec && c.codecType = CodecTypeEnum.VideoCodec)
+    then
+        Ok
+            { parameters with
+                videoCodec = Some codec }
     else
         Error "codec not supported"
 
 let setOverwriteTarget overwrite (parameters: FfmpegEncodingSessionParameters) =
-    { parameters with overwriteTarget = overwrite }
+    { parameters with
+        overwriteTarget = overwrite }
 
 let setCustomParameters customParameters (parameters: FfmpegEncodingSessionParameters) =
-    { parameters with customCommandlineOptions = customParameters }
+    { parameters with
+        customCommandlineOptions = customParameters }
 
 let setVideoBitrateOptions bitrate maxBitrate minBitrate bufsize (parameters: FfmpegEncodingSessionParameters) =
     { parameters with

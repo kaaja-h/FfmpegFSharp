@@ -9,7 +9,7 @@ open FfmpegFSharp
 type private ChangeController<'T when 'T: equality>(handler: 'T -> unit) =
     let mutable data: 'T option = None
 
-    let notify (v) = async { handler v } |> Async.Start
+    let notify v = async { handler v } |> Async.Start
 
     member this.next v =
         match data with
@@ -29,42 +29,33 @@ let private bitrateCommandlineOptions (t: string) (opts: BitrateOptionsType) =
     seq {
         match opts.bitrate with
         | None -> ()
-        | Some (v, u) -> yield $"-b:%s{t} %f{v}%A{u}"
+        | Some(v, u) -> yield $"-b:%s{t} %f{v}%A{u}"
 
         match opts.bufsize with
         | None -> ()
-        | Some (v, u) -> yield $"-bufsize:%s{t} %f{v}%A{u}"
+        | Some(v, u) -> yield $"-bufsize:%s{t} %f{v}%A{u}"
 
         match opts.maxBitrate with
         | None -> ()
-        | Some (v, u) -> yield $"-maxrate:%s{t} %f{v}%A{u}"
+        | Some(v, u) -> yield $"-maxrate:%s{t} %f{v}%A{u}"
 
         match opts.minBitrate with
         | None -> ()
-        | Some (v, u) -> yield $"-minrate:%s{t} %f{v}%A{u}"
+        | Some(v, u) -> yield $"-minrate:%s{t} %f{v}%A{u}"
     }
 
 let private prepareCommandlineParameters (parameters: FfmpegEncodingSessionParameters) =
     seq {
         if (parameters.seekTime |> Option.isSome) then
-            yield
-                parameters.seekTime
-                |> Option.get
-                |> formatTimespan
-                |> sprintf "-ss %s"
+            yield parameters.seekTime |> Option.get |> formatTimespan |> sprintf "-ss %s"
 
         yield $"-i \"%s{parameters.intputFile}\""
 
-        if (parameters.customCommandlineOptions
-            |> Option.isSome) then
+        if (parameters.customCommandlineOptions |> Option.isSome) then
             yield parameters.customCommandlineOptions |> Option.get
 
         if (parameters.duration |> Option.isSome) then
-            yield
-                parameters.duration
-                |> Option.get
-                |> formatTimespan
-                |> sprintf "-t %s"
+            yield parameters.duration |> Option.get |> formatTimespan |> sprintf "-t %s"
 
         if parameters.overwriteTarget then
             yield "-y"
@@ -82,20 +73,33 @@ let private prepareCommandlineParameters (parameters: FfmpegEncodingSessionParam
         if (parameters.videoBitrate |> Option.isSome) then
             yield! bitrateCommandlineOptions "v" (parameters.videoBitrate |> Option.get)
 
+        for item in parameters.metadata.Keys do
+            yield $"-metadata %s{item}=\"%s{parameters.metadata.[item]}\""
+
+
         yield "-hide_banner"
         yield "-loglevel info"
 
         yield $"\"%s{parameters.outputFile}\""
     }
     |> String.concat " "
+    |> fun x ->
+        printf $"%s{x}\n"
+        x
 
 let private findErrors (parameters: FfmpegEncodingSessionParameters) =
+    let isUrl =
+        parameters.intputFile.StartsWith("http://")
+        || parameters.intputFile.StartsWith("https://")
+
     seq {
-        if not (System.IO.File.Exists parameters.intputFile) then
+        if (not isUrl) && not (System.IO.File.Exists parameters.intputFile) then
             yield "Input file not exists"
 
-        if (not parameters.overwriteTarget)
-           && (System.IO.File.Exists parameters.outputFile) then
+        if
+            (not parameters.overwriteTarget)
+            && (System.IO.File.Exists parameters.outputFile)
+        then
             yield "output file already exists"
     }
 
@@ -118,37 +122,28 @@ let private TryOption parser d =
     | _ -> None
 
 let parseDecimal (str: string) =
-    match System.Decimal.TryParse(str, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture) with
-    | (true, result) -> Some result
-    | (false, _) -> None
+    match Decimal.TryParse(str, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture) with
+    | true, result -> Some result
+    | false, _ -> None
 
 
 
 let private parseProgress (data: string) =
-    if data.StartsWith("frame=") then
+    if (not (data = null)) && data.StartsWith("frame=") then
         Some
             { frame =
                 parseValue "frame" data
-                |> Option.map (TryOption System.Int32.TryParse)
+                |> Option.map (TryOption Int32.TryParse)
                 |> Option.flatten
-              fps =
-                parseValue "fps" data
-                |> Option.map (parseDecimal)
-                |> Option.flatten
-              q =
-                parseValue "q" data
-                |> Option.map (parseDecimal)
-                |> Option.flatten
+              fps = parseValue "fps" data |> Option.map parseDecimal |> Option.flatten
+              q = parseValue "q" data |> Option.map parseDecimal |> Option.flatten
               size = parseValue "size" data
               time = parseValue "time" data
               bitrate = parseValue "bitrate" data
-              dup =
-                parseValue "dup" data
-                |> Option.map (TryOption System.Int32.TryParse)
-                |> Option.flatten
+              dup = parseValue "dup" data |> Option.map (TryOption Int32.TryParse) |> Option.flatten
               drop =
                 parseValue "drop" data
-                |> Option.map (TryOption System.Int32.TryParse)
+                |> Option.map (TryOption Int32.TryParse)
                 |> Option.flatten
               speed = parseValue "speed" data }
     else
@@ -169,8 +164,7 @@ let private run (options: FfmpegOptions) progressHandler commandlineParameters =
         let ffmpegProcess = new Process()
         ffmpegProcess.StartInfo <- startInfo
 
-        let change =
-            ChangeController(progressHandler)
+        let change = ChangeController(progressHandler)
 
         ffmpegProcess.ErrorDataReceived.Add(fun data -> data.Data |> parseProgress |> change.next)
 
@@ -179,9 +173,7 @@ let private run (options: FfmpegOptions) progressHandler commandlineParameters =
         else
             ffmpegProcess.BeginErrorReadLine()
 
-            do!
-                ffmpegProcess.WaitForExitAsync()
-                |> Async.AwaitTask
+            do! ffmpegProcess.WaitForExitAsync() |> Async.AwaitTask
 
             return Ok ffmpegProcess.ExitCode
     }

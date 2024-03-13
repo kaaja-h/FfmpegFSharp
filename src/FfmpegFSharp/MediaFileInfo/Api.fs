@@ -127,6 +127,7 @@ type CommonStreamDataType =
       [<JsonPropertyName("bits_per_raw_sample")>]
       bitsPerRawSample: int option
       [<JsonPropertyName("nb_frames")>]
+      [<JsonConverter(typeof<JsonCustomOptionConverter<_, _, StringIntConvertor>>)>]
       nbFrames: int option
       [<JsonConverter(typeof<JsonCustomOptionConverter<_, _, StringIntConvertor>>)>]
       [<JsonPropertyName("nb_read_frames")>]
@@ -184,7 +185,7 @@ type AudioStreamData =
       [<JsonPropertyName("initial_padding")>]
       initialPadding: int option
 
-     }
+    }
 
 type StreamData =
     | AudioStream of AudioStreamData
@@ -261,11 +262,11 @@ type MediaFileInfoType =
       chapters: ChapterType list
       error: ErrorType option }
 
-type SimpleTypeConverterFactory<'T, 'TConverter when 'TConverter: (new: unit -> 'TConverter) and 'TConverter :> JsonConverter<'T>>
-    () =
+type SimpleTypeConverterFactory<'T, 'TConverter
+    when 'TConverter: (new: unit -> 'TConverter) and 'TConverter :> JsonConverter<'T>>() =
     inherit JsonConverterFactory()
 
-    override this.CreateConverter(typeToConvert, options) = new 'TConverter()
+    override this.CreateConverter(_, _) = new 'TConverter()
     override this.CanConvert(typeToConvert) = typeToConvert = typeof<'T>
 
 
@@ -313,7 +314,7 @@ type ChapterTypeValueConverter() =
     inherit JsonConverter<ChapterType>()
 
     let convertTimebase (s: string) =
-        match System.Decimal.TryParse(s) with
+        match Decimal.TryParse(s) with
         | true, d -> Some d
         | false, _ ->
             let splited = s.Split('/')
@@ -325,28 +326,25 @@ type ChapterTypeValueConverter() =
                 | _ -> None
             | _ -> None
 
-    override this.Read(reader, typeToConvert, options) =
+    override this.Read(reader, _, options) =
         let baseData =
             JsonSerializer.Deserialize(&reader, typeof<ChapterTypeJson>, options) :?> ChapterTypeJson
 
-        let tb =
-            convertTimebase baseData.timeBase |> Option.get
+        let tb = convertTimebase baseData.timeBase |> Option.get
 
-        let startMiliseconds =
-            tb * (decimal baseData.start) * 1000M
+        let startMiliseconds = tb * (decimal baseData.start) * 1000M
 
-        let endMiliseconds =
-            tb * (decimal baseData.``end``) * 1000M
+        let endMiliseconds = tb * (decimal baseData.``end``) * 1000M
 
         { id = baseData.id
           tags = baseData.tags
           start = TimeSpan.FromMilliseconds(int startMiliseconds)
           ``end`` = TimeSpan.FromMilliseconds(int endMiliseconds) }
 
-    override this.Write(writer, value, options) = failwith "todo"
+    override this.Write(_, _, _) = failwith "todo"
 
 
-[<System.FlagsAttribute>]
+[<FlagsAttribute>]
 type MediaFileInfoItems =
     | Format = 1
     | Streams = 2

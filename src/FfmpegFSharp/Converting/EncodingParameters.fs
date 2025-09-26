@@ -39,7 +39,7 @@ let private parseCodecs (data: string) =
     let res =
         data.Split(Environment.NewLine)
         |> Seq.map r.Match
-        |> Seq.filter (fun d -> d.Success)
+        |> Seq.filter _.Success
         |> Seq.map (fun d -> prepareCodec d.Groups[1].Value d.Groups[2].Value d.Groups[3].Value)
         |> Seq.toList
 
@@ -50,7 +50,7 @@ let private parseFormats (data: string) =
 
     data.Split(Environment.NewLine)
     |> Array.map r.Match
-    |> Array.filter (fun d -> d.Success)
+    |> Array.filter _.Success
     |> Array.map (fun d ->
         { code = d.Groups[2].Value.Trim()
           name = d.Groups[3].Value.Trim()
@@ -60,7 +60,7 @@ let private parseFormats (data: string) =
 
 let getCodecs =
     let dict =
-        new System.Collections.Concurrent.ConcurrentDictionary<FfmpegOptions, Result<CodecType list, string>>()
+        System.Collections.Concurrent.ConcurrentDictionary<FfmpegOptions, Result<CodecType list, string>>()
 
     let creator =
         fun (o: FfmpegOptions) ->
@@ -73,7 +73,7 @@ let getCodecs =
 
 let getFormats =
     let dict =
-        new System.Collections.Concurrent.ConcurrentDictionary<FfmpegOptions, Result<FormatType list, string>>()
+        System.Collections.Concurrent.ConcurrentDictionary<FfmpegOptions, Result<FormatType list, string>>()
 
     let creator =
         fun (o: FfmpegOptions) ->

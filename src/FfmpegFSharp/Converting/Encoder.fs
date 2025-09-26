@@ -154,7 +154,7 @@ let private parseProgress (data: string) =
 let private run (options: FfmpegOptions) progressHandler commandlineParameters =
     async {
         let startInfo =
-            new ProcessStartInfo(fileName = options.ffmpegPath, arguments = commandlineParameters)
+            ProcessStartInfo(fileName = options.ffmpegPath, arguments = commandlineParameters)
 
         startInfo.RedirectStandardOutput <- false
         startInfo.RedirectStandardError <- true
@@ -167,14 +167,13 @@ let private run (options: FfmpegOptions) progressHandler commandlineParameters =
         let change = ChangeController(progressHandler)
 
         ffmpegProcess.ErrorDataReceived.Add(fun data -> data.Data |> parseProgress |> change.next)
-
+        ffmpegProcess.EnableRaisingEvents <- true
         if not (ffmpegProcess.Start()) then
             return Error "Process not started"
         else
             ffmpegProcess.BeginErrorReadLine()
 
-            do! ffmpegProcess.WaitForExitAsync() |> Async.AwaitTask
-
+            let! _ = ffmpegProcess.Exited |> Async.AwaitEvent
             return Ok ffmpegProcess.ExitCode
     }
 

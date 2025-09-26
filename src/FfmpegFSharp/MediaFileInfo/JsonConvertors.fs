@@ -22,7 +22,7 @@ type JsonCustomConverter<'TSource, 'TTarget, 'TConverter
             | _ -> (JsonSerializer.Deserialize(&reader, typeof<'TSource>, options) :?> 'TSource)
 
         match c.ConvertFrom param with
-        | None -> failwith (sprintf "failed to convert value %O" param)
+        | None -> failwith $"failed to convert value {param}"
         | Some s -> s
 
 
@@ -65,7 +65,7 @@ type StringIntConvertor() =
 
     interface IMyJsonConvertor<string, int> with
         member this.ConvertFrom(var0) = cast var0
-        member this.ConvertTo(var0) = sprintf "%i" var0
+        member this.ConvertTo(var0) = $"%i{var0}"
 
 type StringLongConvertor() =
     let cast (d: string) =
@@ -75,7 +75,7 @@ type StringLongConvertor() =
 
     interface IMyJsonConvertor<string, int64> with
         member this.ConvertFrom(var0) = cast var0
-        member this.ConvertTo(var0) = sprintf "%i" var0
+        member this.ConvertTo(var0) = $"%i{var0}"
 
 
 

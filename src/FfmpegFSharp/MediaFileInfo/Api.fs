@@ -344,7 +344,7 @@ type ChapterTypeValueConverter() =
     override this.Write(_, _, _) = failwith "todo"
 
 
-[<FlagsAttribute>]
+[<Flags>]
 type MediaFileInfoItems =
     | Format = 1
     | Streams = 2

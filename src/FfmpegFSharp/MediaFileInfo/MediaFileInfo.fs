@@ -19,7 +19,7 @@ let private jsonFactories () : JsonConverterFactory list =
 
 
 let private prepareJsonOptions () =
-    let res = new JsonSerializerOptions()
+    let res = JsonSerializerOptions()
     let factories = jsonFactories ()
 
     factories |> List.fold (fun _ c -> res.Converters.Add(c)) ()
@@ -75,7 +75,7 @@ let private commandLineArguments flags =
 
 let internal runFFprobe ffprobePath args =
     async {
-        let startInfo = new ProcessStartInfo(fileName = ffprobePath, arguments = args)
+        let startInfo = ProcessStartInfo(fileName = ffprobePath, arguments = args)
 
         startInfo.RedirectStandardOutput <- true
         startInfo.RedirectStandardError <- true
@@ -83,9 +83,10 @@ let internal runFFprobe ffprobePath args =
         startInfo.CreateNoWindow <- false
         startInfo.RedirectStandardInput <- false
         startInfo.StandardOutputEncoding <- UTF8Encoding()
+        
         let ffprobeProcess = new Process()
         ffprobeProcess.StartInfo <- startInfo
-
+        ffprobeProcess.EnableRaisingEvents <- true
         if not (ffprobeProcess.Start()) then
             return (Error "Process not started")
         else
@@ -95,9 +96,9 @@ let internal runFFprobe ffprobePath args =
             let errorAsync = ffprobeProcess.StandardError.ReadToEndAsync() |> Async.AwaitTask
 
             let! outputs = [ resultAsync; errorAsync ] |> Async.Parallel
-
-            let! _ = ffprobeProcess.WaitForExitAsync() |> Async.AwaitTask
-
+            
+            let! _ = ffprobeProcess.Exited |> Async.AwaitEvent
+            
             return
                 match outputs with
                 | [| ""; "" |] -> Error "Invalid ffmpeg output"

@@ -86,7 +86,6 @@ let internal runFFprobe ffprobePath args =
         
         let ffprobeProcess = new Process()
         ffprobeProcess.StartInfo <- startInfo
-        ffprobeProcess.EnableRaisingEvents <- true
         if not (ffprobeProcess.Start()) then
             return (Error "Process not started")
         else
@@ -96,8 +95,8 @@ let internal runFFprobe ffprobePath args =
             let errorAsync = ffprobeProcess.StandardError.ReadToEndAsync() |> Async.AwaitTask
 
             let! outputs = [ resultAsync; errorAsync ] |> Async.Parallel
+            ffprobeProcess.WaitForExit()
             
-            let! _ = ffprobeProcess.Exited |> Async.AwaitEvent
             
             return
                 match outputs with

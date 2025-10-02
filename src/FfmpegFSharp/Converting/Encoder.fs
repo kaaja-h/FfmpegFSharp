@@ -172,8 +172,7 @@ let private run (options: FfmpegOptions) progressHandler commandlineParameters =
             return Error "Process not started"
         else
             ffmpegProcess.BeginErrorReadLine()
-
-            let! _ = ffmpegProcess.Exited |> Async.AwaitEvent
+            ffmpegProcess.WaitForExit()
             return Ok ffmpegProcess.ExitCode
     }
 

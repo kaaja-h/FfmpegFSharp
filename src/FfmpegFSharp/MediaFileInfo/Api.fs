@@ -332,14 +332,14 @@ type ChapterTypeValueConverter() =
 
         let tb = convertTimebase baseData.timeBase |> Option.get
 
-        let startMiliseconds = tb * (decimal baseData.start) * 1000M
+        let startMilliseconds = tb * (decimal baseData.start) * 1000M
 
-        let endMiliseconds = tb * (decimal baseData.``end``) * 1000M
+        let endMilliseconds = tb * (decimal baseData.``end``) * 1000M
 
         { id = baseData.id
           tags = baseData.tags
-          start = TimeSpan.FromMilliseconds(int startMiliseconds)
-          ``end`` = TimeSpan.FromMilliseconds(int endMiliseconds) }
+          start = TimeSpan.FromMilliseconds(int startMilliseconds)
+          ``end`` = TimeSpan.FromMilliseconds(int endMilliseconds) }
 
     override this.Write(_, _, _) = failwith "todo"
 

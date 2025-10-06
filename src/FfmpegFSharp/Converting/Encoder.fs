@@ -4,6 +4,7 @@ open System
 open System.Diagnostics
 open System.Globalization
 open FfmpegFSharp
+open Microsoft.Extensions.Logging
 
 
 type private ChangeController<'T when 'T: equality>(handler: 'T -> unit) =
@@ -187,4 +188,18 @@ let asyncResultMap f r =
 let encode progressHandler (parameters: FfmpegEncodingSessionParameters) =
     validate parameters
     |> Result.map prepareCommandlineParameters
+    |> asyncResultMap (run parameters.options progressHandler)
+
+
+let encodeWithLogger progressHandler (parameters: FfmpegEncodingSessionParameters) (logger:ILoggerFactory)=
+    let logger = logger.CreateLogger("FfmpegFSharp.Encoder")
+    validate parameters
+    |> Result.map prepareCommandlineParameters
+    |> fun x ->
+        match x with
+        | Error e->
+            logger.LogError(e)
+        | Ok s ->
+            logger.LogDebug(s)
+        x
     |> asyncResultMap (run parameters.options progressHandler)
